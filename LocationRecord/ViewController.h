@@ -9,11 +9,13 @@
 #import <UIKit/UIKit.h>
 #import <CoreLocation/CoreLocation.h>
 #import <MapKit/MapKit.h>
+#import <ViewDeck/ViewDeck.h>
 #import "CoreDataManager.h"
 #import "MapViewAction.h"
 #import "CoreDataAction.h"
 #import "HistoryRecordViewController.h"
-#import <ViewDeck/ViewDeck.h>
+#import "TimeMethod.h"
+
 
 @interface ViewController : UIViewController
 

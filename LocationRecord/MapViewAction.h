@@ -10,6 +10,6 @@
 #import "ViewController.h"
 
 @interface MapViewAction : NSObject
-- (void)showLocationWithCLLocationCoordinate2D:(CLLocationCoordinate2D)coordinate2D mapView:(MKMapView*)mapView;
+- (void)showLocationWithLocations:(NSArray*)locations mapView:(MKMapView*)mapView ;
 - (void)drawLineWithArray:(NSArray*)coordinateArray mapView:(MKMapView*)mapView ;
 @end

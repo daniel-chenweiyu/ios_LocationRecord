@@ -12,6 +12,7 @@
 
 @interface HistoryRecordViewController ()<UITableViewDelegate,UITableViewDataSource> {
     CoreDataManager * dataManager;
+    TimeMethod * timeMethod;
 }
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property MKMapView *mainMapView;
@@ -22,6 +23,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    timeMethod = [TimeMethod new];
     CoreDataAction * coreDataAction = [CoreDataAction new];
     dataManager = [coreDataAction coreDataManagerSetting];
     //set table view background
@@ -48,7 +50,7 @@
     HistoryRecordTableViewCell * cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
     Record * eventItem = (Record*)[dataManager getByIndex:indexPath.row];
     cell.titleLabel.text = eventItem.title;
-    NSDate * date = [self dateFormatWithDate:eventItem.endTime];
+    NSDate * date = [timeMethod dateFormatWithDate:eventItem.endTime];
     cell.dateLabel.text = [NSString stringWithFormat:@"%@",date];
     cell.infoBtn.tag = indexPath.row;
     [cell.infoBtn addTarget:self action:@selector(showInfoWithBtn:) forControlEvents:UIControlEventTouchUpInside];
@@ -77,7 +79,7 @@
     Record * item = (Record*)[dataManager getByIndex:indexPath.row];
     NSArray * locations = item.locations;
     if (locations.count >= 2) {
-        [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations}];
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row]}];
     }
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
 }
@@ -85,8 +87,8 @@
 - (void) showInfoWithBtn:(UIButton*)sender {
     
     Record * eventItem = (Record*)[dataManager getByIndex:sender.tag];
-    NSString * startTime = [NSString stringWithFormat:@"%@",[self dateFormatWithDate: eventItem.startTime]];
-    NSString * endTime = [NSString stringWithFormat:@"%@",[self dateFormatWithDate: eventItem.endTime]];
+    NSString * startTime = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate: eventItem.startTime]];
+    NSString * endTime = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate: eventItem.endTime]];
     double meter = eventItem.totalMile;
     double km = meter / 1000;
     //    eventItem.startTime eventItem.title
@@ -143,13 +145,6 @@
     [self presentViewController:alert animated:true completion:nil];
 }
 
-- (NSDate*) dateFormatWithDate:(NSDate*)date {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-    [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];
-    NSDate * newDate = [dateFormatter stringFromDate:date];
-    return newDate;
-}
 - (IBAction)backBtn:(UIBarButtonItem *)sender {
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
 }

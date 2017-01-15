@@ -22,6 +22,7 @@
 		65D9692B1E23861F00FC8642 /* CoreDataAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D9692A1E23861F00FC8642 /* CoreDataAction.m */; };
 		65D969301E23933B00FC8642 /* MapViewAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D9692F1E23933B00FC8642 /* MapViewAction.m */; };
 		65D969341E23B9EB00FC8642 /* HistoryRecordViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D969331E23B9EB00FC8642 /* HistoryRecordViewController.m */; };
+		65D969711E2B51F600FC8642 /* TimeMethod.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D969701E2B51F600FC8642 /* TimeMethod.m */; };
 		BEE927335B1EFF4F4EBA175C /* libPods-LocationRecord.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A0CC9E862FACB50E7EA58D7 /* libPods-LocationRecord.a */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +54,8 @@
 		65D9692F1E23933B00FC8642 /* MapViewAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MapViewAction.m; sourceTree = "<group>"; };
 		65D969321E23B9EB00FC8642 /* HistoryRecordViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistoryRecordViewController.h; sourceTree = "<group>"; };
 		65D969331E23B9EB00FC8642 /* HistoryRecordViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HistoryRecordViewController.m; sourceTree = "<group>"; };
+		65D9696F1E2B51F600FC8642 /* TimeMethod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimeMethod.h; sourceTree = "<group>"; };
+		65D969701E2B51F600FC8642 /* TimeMethod.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TimeMethod.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -154,6 +157,8 @@
 				65D9692F1E23933B00FC8642 /* MapViewAction.m */,
 				65D969291E23861F00FC8642 /* CoreDataAction.h */,
 				65D9692A1E23861F00FC8642 /* CoreDataAction.m */,
+				65D9696F1E2B51F600FC8642 /* TimeMethod.h */,
+				65D969701E2B51F600FC8642 /* TimeMethod.m */,
 			);
 			name = MethodClass;
 			sourceTree = "<group>";
@@ -301,6 +306,7 @@
 				65D9691F1E237B9A00FC8642 /* CoreDataManager.m in Sources */,
 				65D969341E23B9EB00FC8642 /* HistoryRecordViewController.m in Sources */,
 				65D969301E23933B00FC8642 /* MapViewAction.m in Sources */,
+				65D969711E2B51F600FC8642 /* TimeMethod.m in Sources */,
 				65D969011E236CFF00FC8642 /* main.m in Sources */,
 				65D969251E237FB500FC8642 /* HistoryRecordTableViewCell.m in Sources */,
 			);

@@ -10,10 +10,24 @@
 static MKPolyline * polyline;
 @implementation MapViewAction
 
-- (void)showLocationWithCLLocationCoordinate2D:(CLLocationCoordinate2D)coordinate2D mapView:(MKMapView*)mapView {
-    
-    MKCoordinateSpan span = MKCoordinateSpanMake(0.01, 0.01);
-    MKCoordinateRegion region = MKCoordinateRegionMake(coordinate2D, span);
+- (void)showLocationWithLocations:(NSArray*)locations mapView:(MKMapView*)mapView {
+    CLLocationCoordinate2D pickCoordinate;
+    MKCoordinateSpan span;
+    CLLocation * pickLocation;
+    if (locations.count == 1) {
+        pickLocation = locations.lastObject;
+        span = MKCoordinateSpanMake(0.01, 0.01);
+    } else {
+        int middle = locations.count / 2.0;
+        pickLocation = locations[middle];
+        CLLocation * pickLocationFirst = locations[0];
+        CLLocation * pickLocationLast = locations[locations.count - 1];
+        double latitude = fabs(pickLocationFirst.coordinate.latitude - pickLocationLast.coordinate.latitude);
+        double longitude = fabs(pickLocationFirst.coordinate.longitude - pickLocationLast.coordinate.longitude);
+        span = MKCoordinateSpanMake(latitude, longitude + 0.01);
+    };
+    pickCoordinate = pickLocation.coordinate;
+    MKCoordinateRegion region = MKCoordinateRegionMake(pickCoordinate, span);
     [mapView setRegion:region animated:true];
 }
 
