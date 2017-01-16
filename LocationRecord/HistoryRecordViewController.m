@@ -79,7 +79,7 @@
     Record * item = (Record*)[dataManager getByIndex:indexPath.row];
     NSArray * locations = item.locations;
     if (locations.count >= 2) {
-        [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row]}];
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row],@"title":item.title,@"startTime":item.startTime}];
     }
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
 }
@@ -153,15 +153,5 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
-/*
- #pragma mark - Navigation
- 
- // In a storyboard-based application, you will often want to do a little preparation before navigation
- - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
- // Get the new view controller using [segue destinationViewController].
- // Pass the selected object to the new view controller.
- }
- */
 
 @end

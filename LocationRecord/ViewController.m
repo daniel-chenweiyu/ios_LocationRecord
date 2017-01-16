@@ -45,6 +45,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *topViewLabel;
 @property (weak, nonatomic) IBOutlet UIView *recordBarView;
 @property (weak, nonatomic) IBOutlet UILabel *recordBarLabel;
+@property (weak, nonatomic) IBOutlet UIButton *photoBackBtn;
 @end
 
 @implementation ViewController
@@ -57,7 +58,7 @@
     
     //set locationManager
     [self locationManagerSetting];
-    [NSTimer scheduledTimerWithTimeInterval:3.0 target:self selector:@selector(closeLocationManager) userInfo:nil repeats:false];
+    [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(closeLocationManager) userInfo:nil repeats:false];
     
     //set userTrackingModeChange begin MKUserTrackingModeNone
     targetIndex = 0 ;
@@ -74,7 +75,7 @@
     dataManager.count;
     
     // set NSNotificationCenter
-    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(drawOnMapWithNotification:) name:@"backToMainPage" object:nil];
+    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(backToMainPageAction:) name:@"backToMainPage" object:nil];
     
     //set locationServicesStatus
     locationServicesStatus = true;
@@ -118,14 +119,14 @@
             }
             [self userDefaultsSetting];
             [_startAndStopRecordBtn setImage:[UIImage imageNamed:@"stop"] forState:UIControlStateNormal];
-            recordTarget = true;
+            //            recordTarget = true;
             getByIndex = -1;
             self.barLabel.text = @"紀錄中";
             // reset coordinateArray
             coordinateArray = [NSMutableArray new];
             //add new eventDictionary
             eventDictionary = [NSMutableDictionary new];
-            eventDictionary[@"startTime"] = [NSDate date];
+            //            eventDictionary[@"startTime"] = [NSDate date];
             
             //set Animation
             [self.recordBarView setHidden:false];
@@ -134,6 +135,8 @@
                 self.recordBarLabel.alpha = 0.6;
                 self.recordBarLabel.alpha = 0.2;
             } completion:nil];
+            // remove annotations
+            [self.mainMapView removeAnnotations:self.mainMapView.annotations];
         } else {
             [_startAndStopRecordBtn setImage:[UIImage imageNamed:@"run"] forState:UIControlStateNormal];
             recordTarget = false;
@@ -164,6 +167,8 @@
                     [dataManager saveContextWithCompletion:nil];
                 }
             }];
+            NSArray * locationArray = [NSArray arrayWithObject:currentLocation];
+            [self addAnnotationWithCLLocationArray:locationArray];
             count = 0;
             [self.recordBarView setHidden:true];
             [self decideShowWichInfo];
@@ -257,6 +262,8 @@
 }
 - (IBAction)photoBtn:(UIButton *)sender {
     
+    [self.photoBtn setHidden:true];
+    [self.photoBackBtn setHidden:true];
     CGRect rect = [[UIScreen mainScreen] bounds];
     CGSize imageSize = rect.size;
     UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0);
@@ -268,6 +275,20 @@
     CGContextRestoreGState(ctx);
     UIGraphicsEndImageContext();
     UIImageWriteToSavedPhotosAlbum(screengrab, nil, nil, nil);
+    
+    //add view
+    UIView * whiteView = [UIView new];
+    whiteView.frame = self.view.frame;
+    whiteView.backgroundColor = [UIColor whiteColor];
+    [self.view addSubview:whiteView];
+    [UIView animateWithDuration:1 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        whiteView.alpha = 1;
+        whiteView.alpha = 0.2;
+    } completion:^(BOOL finished) {
+        [whiteView setHidden:true];
+        [self.photoBtn setHidden:false];
+        [self.photoBackBtn setHidden:false];
+    }];
 }
 
 
@@ -280,10 +301,6 @@
         [mapViewAction drawLineWithArray:coordinateArray mapView:self.mainMapView];
         count++;
     }
-    //    } else {
-    //        count = 0;
-    //        coordinateArray = [NSMutableArray new];
-    //    }
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         [mapViewAction showLocationWithLocations:locations mapView:_mainMapView];
@@ -302,15 +319,83 @@
     [self userTrackingModeChangedWithTargetIndex:targetIndex];
 }
 
+- (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {
+    
+    if(annotation == mapView.userLocation){
+        return nil;
+    }
+    
+    NSString * ID = @"pin";
+    MKAnnotationView * result =(MKPinAnnotationView*)[mapView dequeueReusableAnnotationViewWithIdentifier:ID];
+    if(result == nil){
+        result = [[MKAnnotationView alloc]initWithAnnotation:annotation reuseIdentifier:ID];
+    }else{
+        result.annotation = annotation ;
+    }
+    result.canShowCallout = true ;
+    
+    UIImage * imageStart = [UIImage imageNamed:@"annotationStart-1"];
+    UIImage * imageEnd = [UIImage imageNamed:@"annotationEnd"];
+    
+    // Use our own image
+    if ([annotation.title isEqualToString:@"開始"]) {
+        result.image = imageStart;
+    } else {
+        result.image = imageEnd;
+    }
+    
+    return result ;
+}
+
 - (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id<MKOverlay>)overlay {
     
     lineView = [[MKPolylineView alloc] initWithPolyline:overlay];
-    lineView.strokeColor = [UIColor redColor];
+    lineView.strokeColor = [UIColor blueColor];
     lineView.lineWidth = 5;
     return lineView;
 }
 
 #pragma mark - method
+
+- (void) addAnnotationWithCLLocationArray:(NSArray*)locations {
+    
+    
+    MKPointAnnotation * annotation = [MKPointAnnotation new];
+    CLLocation * pickLocation;
+    CLLocationCoordinate2D pickCoordinate;
+    TimeMethod * timeMethod = [TimeMethod new];
+    if (locations.count == 1) {
+        pickLocation = locations.firstObject;
+        pickCoordinate = pickLocation.coordinate;
+        annotation.coordinate = pickCoordinate;
+        if (recordTarget) {
+            annotation.title = @"開始";
+            annotation.subtitle = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate:eventDictionary[@"startTime"]]];
+        } else {
+            annotation.title = @"結束";
+            annotation.subtitle = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate:eventDictionary[@"endTime"]]];;
+        }
+        [_mainMapView addAnnotation:annotation];
+    } else {
+        MKPointAnnotation * annotationEnd = [MKPointAnnotation new];
+        for (int i = 0; i < 2; i++) {
+            if (i == 0) {
+                pickLocation = locations.firstObject;
+                pickCoordinate = pickLocation.coordinate;
+                annotation.coordinate = pickCoordinate;
+                annotation.title = @"開始";
+                annotation.subtitle = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate:item.startTime]];
+            } else if(i == 1) {
+                pickLocation = locations.lastObject;
+                pickCoordinate = pickLocation.coordinate;
+                annotationEnd.coordinate = pickCoordinate;
+                annotationEnd.title = @"結束";
+                annotationEnd.subtitle = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate:item.endTime]];;
+            }
+        }
+        [_mainMapView addAnnotations:@[annotation,annotationEnd]];
+    }
+}
 
 - (void) decideShowWichInfo {
     
@@ -365,6 +450,9 @@
 
 - (void)runAnimation {
     [self.startAndStopRecordBtn setEnabled:false];
+    [self.userTrackModeBtn setEnabled:false];
+    [self.screenShotBtn setEnabled:false];
+    [self.menuBtn setEnabled:false];
     NSArray * imageArray =[NSArray arrayWithObjects:[UIImage imageNamed:@"3"],[UIImage imageNamed:@"2"],[UIImage imageNamed:@"1"],[UIImage imageNamed:@"go"], nil];
     UIImageView * imageView = [[UIImageView alloc] initWithFrame:self.view.frame];
     [imageView setAnimationImages:imageArray];
@@ -372,21 +460,34 @@
     [imageView setAnimationDuration:4.0];
     [imageView startAnimating];
     [self.view addSubview:imageView];
-    // set tim delay to control btn status
+    // set tim delay to control btn status and some action
     dispatch_queue_t delayThread = dispatch_queue_create("timeDelay", nil);
     dispatch_async(delayThread, ^{
         [NSThread sleepForTimeInterval:4.0];
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.startAndStopRecordBtn setEnabled:true];
+            [self.userTrackModeBtn setEnabled:true];
+            [self.screenShotBtn setEnabled:true];
+            [self.menuBtn setEnabled:true];
+            recordTarget = true;
+            eventDictionary[@"startTime"] = [NSDate date];
+            CLLocation * userLocation = [[CLLocation alloc] initWithLatitude:self.mainMapView.userLocation.coordinate.latitude longitude:self.mainMapView.userLocation.coordinate.longitude];
+            NSArray * locationArray = [NSArray arrayWithObject:userLocation];
+            [self addAnnotationWithCLLocationArray:locationArray];
         });
     });
 }
 
-- (void)drawOnMapWithNotification:(NSNotification*)notification {
+- (void)backToMainPageAction:(NSNotification*)notification {
+    [self.mainMapView removeAnnotations:self.mainMapView.annotations];
     NSDictionary * loactionDictionary = [notification userInfo];
     NSArray * locations = loactionDictionary[@"locations"];
     getByIndex = [loactionDictionary[@"getByIndex"] integerValue];
+    NSRange range = NSMakeRange(0, 10);
+    self.barLabel.text = [[NSString stringWithFormat:@"%@",loactionDictionary[@"startTime"]] substringWithRange:range];
     [self decideShowWichInfo];
+    NSArray * locationArray = [NSArray arrayWithArray:item.locations];
+    [self addAnnotationWithCLLocationArray:locationArray];
     [mapViewAction showLocationWithLocations:locations mapView:_mainMapView];
     [mapViewAction drawLineWithArray:locations mapView:self.mainMapView];
 }
