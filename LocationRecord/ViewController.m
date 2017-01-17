@@ -47,6 +47,7 @@
 @property (weak, nonatomic) IBOutlet UIView *recordBarView;
 @property (weak, nonatomic) IBOutlet UILabel *recordBarLabel;
 @property (weak, nonatomic) IBOutlet UIButton *photoBackBtn;
+@property (weak, nonatomic) IBOutlet UIImageView *gpsImage;
 @end
 
 @implementation ViewController
@@ -91,6 +92,17 @@
     [self.recordBarView setHidden:true];
 }
 
+- (void) gpsStatusChange {
+    if (_mainMapView.userLocation.location.verticalAccuracy < 0) {
+        
+    } else if(_mainMapView.userLocation.location.verticalAccuracy > 163) {
+        [_gpsImage setImage:[UIImage imageNamed:@"week"]];
+    } else if (_mainMapView.userLocation.location.verticalAccuracy > 48) {
+        [_gpsImage setImage:[UIImage imageNamed:@"middle"]];
+    } else {
+        [_gpsImage setImage:[UIImage imageNamed:@"strong"]];
+    }
+}
 
 #pragma mark - Btn Act
 
@@ -151,7 +163,7 @@
             if (coordinateArray.count == 0) {
                 coordinateArray[0] = _mainMapView.userLocation.location;
             }
-                eventDictionary[@"locations"] = coordinateArray;
+            eventDictionary[@"locations"] = coordinateArray;
             CLLocationDistance distanceInMeters;
             if (coordinateArray.count != 0) {
                 for (int i = 0 ; i < coordinateArray.count - 1; i++) {
@@ -175,7 +187,7 @@
             if (coordinateArray.count == 0) {
                 locationArray = [NSArray arrayWithObject:_mainMapView.userLocation.location];
             } else {
-             locationArray = [NSArray arrayWithObject:currentLocation];
+                locationArray = [NSArray arrayWithObject:currentLocation];
             }
             [self addAnnotationWithCLLocationArray:locationArray];
             count = 0;
@@ -276,46 +288,47 @@
     if (status == ALAuthorizationStatusDenied) {
         UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"訊息" message:@"相簿存取設定尚未啟用" preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction * setting = [UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
         }];
         UIAlertAction * ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
         [alert addAction:setting];
         [alert addAction:ok];
         [self presentViewController:alert animated:true completion:nil];
     } else {
-    [self.photoBtn setHidden:true];
-    [self.photoBackBtn setHidden:true];
-    CGRect rect = [[UIScreen mainScreen] bounds];
-    CGSize imageSize = rect.size;
-    UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0);
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
-    CGContextSaveGState(ctx);
-    CGContextConcatCTM(ctx, [self.view.layer affineTransform]);
-    [self.view drawViewHierarchyInRect:self.view.bounds afterScreenUpdates:YES];
-    UIImage *screengrab = UIGraphicsGetImageFromCurrentImageContext();
-    CGContextRestoreGState(ctx);
-    UIGraphicsEndImageContext();
-    UIImageWriteToSavedPhotosAlbum(screengrab, nil, nil, nil);
-    
-    //add view
-    UIView * whiteView = [UIView new];
-    whiteView.frame = self.view.frame;
-    whiteView.backgroundColor = [UIColor whiteColor];
-    [self.view addSubview:whiteView];
-    [UIView animateWithDuration:1 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
-        whiteView.alpha = 1;
-        whiteView.alpha = 0.2;
-    } completion:^(BOOL finished) {
-        [whiteView setHidden:true];
-        [self.photoBtn setHidden:false];
-        [self.photoBackBtn setHidden:false];
-    }];
+        [self.photoBtn setHidden:true];
+        [self.photoBackBtn setHidden:true];
+        CGRect rect = [[UIScreen mainScreen] bounds];
+        CGSize imageSize = rect.size;
+        UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0);
+        CGContextRef ctx = UIGraphicsGetCurrentContext();
+        CGContextSaveGState(ctx);
+        CGContextConcatCTM(ctx, [self.view.layer affineTransform]);
+        [self.view drawViewHierarchyInRect:self.view.bounds afterScreenUpdates:YES];
+        UIImage *screengrab = UIGraphicsGetImageFromCurrentImageContext();
+        CGContextRestoreGState(ctx);
+        UIGraphicsEndImageContext();
+        UIImageWriteToSavedPhotosAlbum(screengrab, nil, nil, nil);
+        
+        //add view
+        UIView * whiteView = [UIView new];
+        whiteView.frame = self.view.frame;
+        whiteView.backgroundColor = [UIColor whiteColor];
+        [self.view addSubview:whiteView];
+        [UIView animateWithDuration:1 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+            whiteView.alpha = 1;
+            whiteView.alpha = 0.2;
+        } completion:^(BOOL finished) {
+            [whiteView setHidden:true];
+            [self.photoBtn setHidden:false];
+            [self.photoBackBtn setHidden:false];
+        }];
     }
 }
 
 
 #pragma mark - CLLocationManagerDelegate Methods
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
+    
     currentLocation = locations.lastObject;
     coordinate = currentLocation.coordinate;
     if (recordTarget) {
@@ -475,10 +488,14 @@
 }
 
 - (void)runAnimation {
+    
+    // set btn enable
     [self.startAndStopRecordBtn setEnabled:false];
     [self.userTrackModeBtn setEnabled:false];
     [self.screenShotBtn setEnabled:false];
     [self.menuBtn setEnabled:false];
+    
+    // set imageView animation
     NSArray * imageArray =[NSArray arrayWithObjects:[UIImage imageNamed:@"3"],[UIImage imageNamed:@"2"],[UIImage imageNamed:@"1"],[UIImage imageNamed:@"go"], nil];
     UIImageView * imageView = [[UIImageView alloc] initWithFrame:self.view.frame];
     [imageView setAnimationImages:imageArray];
@@ -486,6 +503,7 @@
     [imageView setAnimationDuration:4.0];
     [imageView startAnimating];
     [self.view addSubview:imageView];
+    
     // set tim delay to control btn status and some action
     dispatch_queue_t delayThread = dispatch_queue_create("timeDelay", nil);
     dispatch_async(delayThread, ^{
@@ -505,6 +523,7 @@
 }
 
 - (void)backToMainPageAction:(NSNotification*)notification {
+    
     [self.mainMapView removeAnnotations:self.mainMapView.annotations];
     NSDictionary * loactionDictionary = [notification userInfo];
     NSArray * locations = loactionDictionary[@"locations"];
@@ -534,6 +553,7 @@
 }
 
 -(void)locationManagerSetting {
+    
     if (locationManager == nil) {
         locationManager = [CLLocationManager new];
         [locationManager requestWhenInUseAuthorization];
@@ -566,6 +586,7 @@
 }
 
 - (void) alertWithIsHideBool:(BOOL)isHide {
+    
     NSString * message;
     if (isHide) {
         message = @"隱藏朋友位置時無法使用此功能";

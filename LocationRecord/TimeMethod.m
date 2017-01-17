@@ -11,6 +11,7 @@
 @implementation TimeMethod
 
 - (NSDate*) dateFormatWithDate:(NSDate*)date {
+    
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
     [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];
