@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "Record+CoreDataClass.h"
+#import <AssetsLibrary/AssetsLibrary.h>
 
 @interface ViewController () <CLLocationManagerDelegate,MKMapViewDelegate> {
     NSUserDefaults * userDefaults;
@@ -147,7 +148,10 @@
             eventDictionary[@"title"] = [NSString stringWithFormat:@"軌跡記錄(%@)",eventId];
             eventDictionary[@"descripe"] = @"";
             eventDictionary[@"endTime"] = [NSDate date];
-            eventDictionary[@"locations"] = coordinateArray;
+            if (coordinateArray.count == 0) {
+                coordinateArray[0] = _mainMapView.userLocation.location;
+            }
+                eventDictionary[@"locations"] = coordinateArray;
             CLLocationDistance distanceInMeters;
             if (coordinateArray.count != 0) {
                 for (int i = 0 ; i < coordinateArray.count - 1; i++) {
@@ -167,7 +171,12 @@
                     [dataManager saveContextWithCompletion:nil];
                 }
             }];
-            NSArray * locationArray = [NSArray arrayWithObject:currentLocation];
+            NSArray * locationArray;
+            if (coordinateArray.count == 0) {
+                locationArray = [NSArray arrayWithObject:_mainMapView.userLocation.location];
+            } else {
+             locationArray = [NSArray arrayWithObject:currentLocation];
+            }
             [self addAnnotationWithCLLocationArray:locationArray];
             count = 0;
             [self.recordBarView setHidden:true];
@@ -262,6 +271,18 @@
 }
 - (IBAction)photoBtn:(UIButton *)sender {
     
+    // ios 9 method
+    ALAuthorizationStatus status = [ALAssetsLibrary authorizationStatus];
+    if (status == ALAuthorizationStatusDenied) {
+        UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"訊息" message:@"相簿存取設定尚未啟用" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction * setting = [UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+        }];
+        UIAlertAction * ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+        [alert addAction:setting];
+        [alert addAction:ok];
+        [self presentViewController:alert animated:true completion:nil];
+    } else {
     [self.photoBtn setHidden:true];
     [self.photoBackBtn setHidden:true];
     CGRect rect = [[UIScreen mainScreen] bounds];
@@ -289,6 +310,7 @@
         [self.photoBtn setHidden:false];
         [self.photoBackBtn setHidden:false];
     }];
+    }
 }
 
 
@@ -438,8 +460,12 @@
     if ([CLLocationManager locationServicesEnabled]){
         if ([CLLocationManager authorizationStatus]==kCLAuthorizationStatusDenied) {
             locationServicesStatus = false;
+            UIAlertAction * setting = [UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+            }];
             UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"訊息" message:@"定位相關設定尚未啟用" preferredStyle:UIAlertControllerStyleAlert];
             UIAlertAction * ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+            [alert addAction:setting];
             [alert addAction:ok];
             [self presentViewController:alert animated:true completion:nil];
         }else{

@@ -17,6 +17,9 @@ static MKPolyline * polyline;
     if (locations.count == 1) {
         pickLocation = locations.lastObject;
         span = MKCoordinateSpanMake(0.01, 0.01);
+    } else if(locations.count == 0){
+        pickLocation = [[CLLocation alloc] initWithLatitude:mapView.userLocation.coordinate.latitude longitude:mapView.userLocation.coordinate.longitude];
+        span = MKCoordinateSpanMake(0.01, 0.01);
     } else {
         int middle = locations.count / 2.0;
         pickLocation = locations[middle];

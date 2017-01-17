@@ -206,6 +206,7 @@
 				TargetAttributes = {
 					65D968FB1E236CFF00FC8642 = {
 						CreatedOnToolsVersion = 8.2;
+						DevelopmentTeam = 692T8R667T;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
@@ -429,6 +430,7 @@
 			baseConfigurationReference = 43C1A99190F86B21C5B21D3F /* Pods-LocationRecord.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 692T8R667T;
 				INFOPLIST_FILE = LocationRecord/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daniel.LocationRecord;
@@ -442,6 +444,7 @@
 			baseConfigurationReference = 0E3EBB5CDCC14853DEBAF25C /* Pods-LocationRecord.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 692T8R667T;
 				INFOPLIST_FILE = LocationRecord/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Daniel.LocationRecord;

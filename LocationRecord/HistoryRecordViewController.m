@@ -78,9 +78,7 @@
     
     Record * item = (Record*)[dataManager getByIndex:indexPath.row];
     NSArray * locations = item.locations;
-    if (locations.count >= 2) {
         [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row],@"title":item.title,@"startTime":item.startTime}];
-    }
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
 }
 
