@@ -13,6 +13,8 @@
 @interface HistoryRecordViewController ()<UITableViewDelegate,UITableViewDataSource> {
     CoreDataManager * dataManager;
     TimeMethod * timeMethod;
+    NSUserDefaults * userDefaults;
+    BOOL isDeletePickID;
 }
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property MKMapView *mainMapView;
@@ -33,10 +35,19 @@
     UIImageView * imageView = [[UIImageView alloc] initWithImage:backgroundImage];
     [imageView setContentMode:UIViewContentModeScaleAspectFit];
     self.tableView.backgroundView = imageView;
+    // set userDefaults
+    userDefaults = [NSUserDefaults standardUserDefaults];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [_tableView reloadData];
+    isDeletePickID = false;
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    if (isDeletePickID) {
+         [[NSNotificationCenter defaultCenter]postNotificationName:@"deletePickID" object:nil];
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -62,6 +73,19 @@
     
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         
+        Record * recordItem = (Record*)[dataManager getByIndex:indexPath.row];
+        int deleteID = recordItem.id;
+        NSNumber * NSPickID = [userDefaults objectForKey:@"pickId"];
+        if (NSPickID != nil) {
+            int pickID = [NSPickID intValue];
+            if (deleteID == pickID) {
+                isDeletePickID = true;
+                [userDefaults setObject:@(-1) forKey:@"pickId"];
+                [userDefaults synchronize];
+            }
+        }
+
+        
         NSManagedObject *item = [dataManager getByIndex:indexPath.row];
         [dataManager deleteItem:item];
         [dataManager saveContextWithCompletion:^(BOOL success) {
@@ -77,6 +101,9 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     Record * item = (Record*)[dataManager getByIndex:indexPath.row];
+    int pickID = item.id;
+    [userDefaults setObject:@(pickID) forKey:@"pickId"];
+    [userDefaults synchronize];
     NSArray * locations = item.locations;
         [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row],@"title":item.title,@"startTime":item.startTime}];
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
