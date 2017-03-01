@@ -61,7 +61,8 @@
     
     //set locationManager
     [self locationManagerSetting];
-    [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(closeLocationManager) userInfo:nil repeats:false];
+//    [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(closeLocationManager) userInfo:nil repeats:false];
+   
     
     //set userTrackingModeChange begin MKUserTrackingModeNone
     targetIndex = 0 ;
@@ -94,7 +95,7 @@
     
     // set GPS detect timer
     [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(gpsStatusChange) userInfo:nil repeats:true];
-    checkGPSStatus = true;
+    checkGPSStatus = false;
 }
 
 #pragma mark - Btn Act
@@ -161,12 +162,15 @@
         }
         eventDictionary[@"locations"] = coordinateArray;
         CLLocationDistance distanceInMeters;
-        if (coordinateArray.count != 0) {
+        NSNumber * totalMile;
+        if (coordinateArray.count >= 2) {
             for (int i = 0 ; i < coordinateArray.count - 1; i++) {
                 distanceInMeters += [coordinateArray[i] distanceFromLocation:coordinateArray[i + 1]];
             }
+             totalMile = [NSNumber numberWithDouble:distanceInMeters];
+        } else {
+            totalMile = @(0.0);
         }
-        NSNumber * totalMile = [NSNumber numberWithDouble:distanceInMeters];
         eventDictionary[@"totalMile"] = totalMile;
         NSTimeInterval sec = [eventDictionary[@"endTime"] timeIntervalSinceDate:eventDictionary[@"startTime"]];
         NSNumber * timeSpan = [NSNumber numberWithInt:sec];
@@ -180,11 +184,11 @@
             }
         }];
         NSArray * locationArray;
-        //            if (coordinateArray.count == 0) {
+                    if (coordinateArray.count == 0) {
         locationArray = [NSArray arrayWithObject:_mainMapView.userLocation.location];
-        //            } else {
-        //                locationArray = [NSArray arrayWithObject:currentLocation];
-        //            }
+                    } else {
+                        locationArray = [NSArray arrayWithObject:currentLocation];
+                    }
         [self addAnnotationWithCLLocationArray:locationArray];
         count = 0;
         [self.recordBarView setHidden:true];
@@ -240,7 +244,7 @@
                 //                [self.startAndStopRecordBtn setHidden:true];
                 //                [self.screenShotBtn setHidden:true];
                 if (item != nil) {
-                    NSArray * locations = item.locations;
+                    NSArray * locations = (NSArray*)(item.locations);
                     [mapViewAction showLocationWithLocations:locations mapView:_mainMapView];
                 }
             }
@@ -313,19 +317,26 @@
         UIGraphicsEndImageContext();
         UIImageWriteToSavedPhotosAlbum(screengrab, nil, nil, nil);
         
-        //add view
-        UIView * whiteView = [UIView new];
-        whiteView.frame = self.view.frame;
-        whiteView.backgroundColor = [UIColor whiteColor];
-        [self.view addSubview:whiteView];
-        [UIView animateWithDuration:1 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
-            whiteView.alpha = 1;
-            whiteView.alpha = 0.2;
-        } completion:^(BOOL finished) {
-            [whiteView setHidden:true];
+        if (status != ALAuthorizationStatusNotDetermined) {
+            //add view
+            UIView * whiteView = [UIView new];
+            whiteView.frame = self.view.frame;
+            whiteView.backgroundColor = [UIColor whiteColor];
+            [self.view addSubview:whiteView];
+            [UIView animateWithDuration:1 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+                whiteView.alpha = 1;
+                whiteView.alpha = 0.2;
+                [self.photoBtn setHidden:false];
+                [self.photoBackBtn setHidden:false];
+            } completion:^(BOOL finished) {
+                [whiteView setHidden:true];
+//                [self.photoBtn setHidden:false];
+//                [self.photoBackBtn setHidden:false];
+            }];
+        } else {
             [self.photoBtn setHidden:false];
             [self.photoBackBtn setHidden:false];
-        }];
+        }
     }
 }
 
@@ -336,6 +347,14 @@
     currentLocation = locations.lastObject;
     coordinate = currentLocation.coordinate;
     if (recordTarget) {
+        
+        // filter location track noise
+        if (count >= 1) {
+            double distanceInMeters = [coordinateArray[count - 1] distanceFromLocation:currentLocation];
+            if (distanceInMeters < currentLocation.horizontalAccuracy * 0.66) {
+                return;
+            }
+        }
         coordinateArray[count] = currentLocation;
         [mapViewAction drawLineWithArray:coordinateArray mapView:self.mainMapView];
         count++;
@@ -343,6 +362,7 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         [mapViewAction showLocationWithLocations:locations mapView:_mainMapView];
+        [locationManager stopUpdatingLocation];
     });
 }
 
@@ -390,12 +410,10 @@
     
     lineView = [[MKPolylineView alloc] initWithPolyline:overlay];
     lineView.strokeColor = [UIColor blueColor];
-    lineView.lineWidth = 5;
+    lineView.lineWidth = 10;
     return lineView;
 }
-
 #pragma mark - method
-
 
 - (void) changePickEventStatusToNil {
     self.barLabel.text = @"Welcome";
@@ -418,13 +436,15 @@
 }
 
 - (void) gpsStatusChange {
-    if (_mainMapView.userLocation.location.verticalAccuracy < 0) {
+
+    
+    if (_mainMapView.userLocation.location.horizontalAccuracy < 0) {
         [_gpsImage setImage:[UIImage imageNamed:@"week"]];
         checkGPSStatus = false;
-    } else if(_mainMapView.userLocation.location.verticalAccuracy > 163) {
+    } else if(_mainMapView.userLocation.location.horizontalAccuracy > 163) {
         [_gpsImage setImage:[UIImage imageNamed:@"week"]];
         checkGPSStatus = false;
-    } else if (_mainMapView.userLocation.location.verticalAccuracy > 48) {
+    } else if (_mainMapView.userLocation.location.horizontalAccuracy > 48) {
         [_gpsImage setImage:[UIImage imageNamed:@"middle"]];
         checkGPSStatus = true;
     } else {
@@ -477,8 +497,8 @@
     
     if (eventDictionary == nil && getByIndex == -1) {
         [self.photoBtn setHidden:true];
-        self.topViewLabel.text = @"尚未選擇軌跡";
-        self.bottomViewLabel.text = @"請選擇軌跡";
+        self.topViewLabel.text = @"尚未選擇記錄";
+        self.bottomViewLabel.text = @"請選擇歷史紀錄\n或新增記錄";
     } else {
         TimeMethod * timeMethod = [TimeMethod new];
         double meter;
@@ -501,13 +521,13 @@
     }
 }
 
--(void) closeLocationManager {
-    
-    if (locationManager != nil) {
-        [locationManager stopUpdatingLocation];
-        locationManager = nil;
-    }
-}
+//-(void) closeLocationManager {
+//    
+//    if (locationManager != nil) {
+//        [locationManager stopUpdatingLocation];
+//        locationManager = nil;
+//    }
+//}
 
 -(void) checkLocationServicesEnabled {
     
@@ -528,6 +548,21 @@
         } else {
             locationServicesStatus = true;
         }
+    } else {
+        locationServicesStatus = false;
+        UIAlertAction * setting = [UIAlertAction actionWithTitle:@"Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            double version = [[UIDevice currentDevice].systemVersion doubleValue];
+            if (version >= 10) {
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"App-Prefs:root=LOCATION_SERVICES"]];
+            } else {
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"prefs:root=LOCATION_SERVICES"]];
+            }
+        }];
+        UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"訊息" message:@"隱私權定位服務尚未啟用" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction * ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+        [alert addAction:setting];
+        [alert addAction:ok];
+        [self presentViewController:alert animated:true completion:nil];
     }
 }
 
@@ -575,7 +610,7 @@
     NSRange range = NSMakeRange(0, 10);
     self.barLabel.text = [[NSString stringWithFormat:@"%@",loactionDictionary[@"startTime"]] substringWithRange:range];
     [self decideShowWichInfo];
-    NSArray * locationArray = [NSArray arrayWithArray:item.locations];
+    NSArray * locationArray = (NSArray*)(item.locations);
     [self addAnnotationWithCLLocationArray:locationArray];
     [mapViewAction showLocationWithLocations:locations mapView:_mainMapView];
     [mapViewAction drawLineWithArray:locations mapView:self.mainMapView];
@@ -590,7 +625,7 @@
     if (data != nil) {
         eventId = data;
     }else{
-        eventId = @(0);
+        eventId = @(1);
         [userDefaults setObject:eventId forKey:@"eventId"];
         [userDefaults synchronize];
     }
@@ -607,8 +642,8 @@
         locationManager.pausesLocationUpdatesAutomatically = false ;
         [locationManager requestWhenInUseAuthorization];
         [locationManager setAllowsBackgroundLocationUpdates:YES];
-        [locationManager startUpdatingLocation];
     }
+    [locationManager startUpdatingLocation];
 }
 
 - (void)userTrackingModeChangedWithTargetIndex:(int)targetNumber {
@@ -632,7 +667,7 @@
 - (void) checkIsRecording {
     
     NSString * message;
-        message = @"紀錄時無法此用此功能";
+    message = @"紀錄時無法此用此功能";
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"訊息" message:message preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction * ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:ok];

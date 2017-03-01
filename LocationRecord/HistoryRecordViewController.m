@@ -104,7 +104,7 @@
     int pickID = item.id;
     [userDefaults setObject:@(pickID) forKey:@"pickId"];
     [userDefaults synchronize];
-    NSArray * locations = item.locations;
+    NSArray * locations = (NSArray*)(item.locations);
         [[NSNotificationCenter defaultCenter]postNotificationName:@"backToMainPage" object:self userInfo:@{@"locations":locations,@"getByIndex":[NSNumber numberWithInteger:indexPath.row],@"title":item.title,@"startTime":item.startTime}];
     [self.viewDeckController openSide:IIViewDeckSideNone animated:YES];
 }
@@ -116,8 +116,10 @@
     NSString * endTime = [NSString stringWithFormat:@"%@",[timeMethod dateFormatWithDate: eventItem.endTime]];
     double meter = eventItem.totalMile;
     double km = meter / 1000;
+    double sec = eventItem.spanTime;
+    NSString * timeSpan = [timeMethod secFormatChangeWith:sec];
     //    eventItem.startTime eventItem.title
-    NSString * message = [NSString stringWithFormat:@"備註：%@\n起始時間：%@\n結束時間：%@\n時程：%0.0f sec\n距離：%.03f km",eventItem.descripe,startTime,endTime,eventItem.spanTime,km];
+    NSString * message = [NSString stringWithFormat:@"備註：%@\n起始時間：%@\n結束時間：%@\n時程：%@\n距離：%.03f km",eventItem.descripe,startTime,endTime,timeSpan,km];
     
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:eventItem.title message:message preferredStyle:UIAlertControllerStyleAlert];
     
